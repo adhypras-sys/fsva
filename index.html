@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard TPP Laik HSP 2024-2025</title>
+    
+    <!-- Tailwind CSS untuk styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js untuk visualisasi grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- PapaParse untuk membaca file CSV asli dengan cepat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Custom scrollbar untuk tabel */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        th {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        th:hover {
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 lg:p-8">
+
+    <!-- Header Section -->
+    <header class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Dashboard Pemantauan TPP Laik HSP</h1>
+            <p class="text-slate-500 mt-1">Komparasi Kepatuhan Higiene Sanitasi Pangan 2024 - 2025 (Sinkronisasi Google Sheets)</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 items-center">
+            <div class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium">
+                <span id="lastUpdated">Menyiapkan koneksi data...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Status / Loading Indicator -->
+    <div id="statusMessage" class="mb-6 p-4 bg-blue-50 text-blue-700 rounded-md border border-blue-200 shadow-sm transition-all duration-300">
+        Menginisialisasi sistem...
+    </div>
+
+    <!-- Filter Control Panel (Cascading Filters) -->
+    <section class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h2 class="text-lg font-semibold text-slate-700 mb-4 border-b border-slate-100 pb-2">Filter Data Wilayah & TPP</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            
+            <div>
+                <label for="provinsiFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Provinsi</label>
+                <select id="provinsiFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                    <option value="all">Semua Provinsi</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="kabupatenFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Kabupaten/Kota</label>
+                <select id="kabupatenFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                    <option value="all">Semua Kab/Kota</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="kecamatanFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Kecamatan</label>
+                <select id="kecamatanFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                    <option value="all">Semua Kecamatan</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="puskesmasFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Puskesmas</label>
+                <select id="puskesmasFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                    <option value="all">Semua Puskesmas</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="jenisFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Jenis TPP</label>
+                <select id="jenisFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                    <option value="all">Semua Jenis</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="searchInput" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Pencarian Bebas</label>
+                <input type="text" id="searchInput" placeholder="Cari nama/alamat..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white outline-none transition-shadow">
+            </div>
+
+        </div>
+        <div class="mt-4 flex justify-end">
+            <button id="resetFilterBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors border border-slate-300">
+                Reset Semua Filter
+            </button>
+        </div>
+    </section>
+
+    <!-- Hero KPI Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6" id="kpiContainer">
+        
+        <!-- Kartu 1: Total -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Total TPP Terdaftar</h3>
+                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded">Fasilitas</span>
+            </div>
+            <p class="text-4xl font-black text-slate-800 mt-4" id="kpiTotal">0</p>
+        </div>
+
+        <!-- Kartu 2: 2024 -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Capaian Laik 2024</h3>
+                <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-0.5 rounded">Tahun Lalu</span>
+            </div>
+            <div class="flex items-baseline gap-2 mt-4">
+                <p class="text-4xl font-black text-slate-700" id="kpiLaik2024">0</p>
+                <p class="text-sm font-bold text-slate-500" id="kpiPersen2024">(0%)</p>
+            </div>
+        </div>
+
+        <!-- Kartu 3: 2025 -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Capaian Laik 2025</h3>
+                <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded">Tahun Ini</span>
+            </div>
+            <div class="flex items-baseline gap-2 mt-4">
+                <p class="text-4xl font-black text-emerald-600" id="kpiLaik2025">0</p>
+                <p class="text-sm font-bold text-emerald-700" id="kpiPersen2025">(0%)</p>
+            </div>
+        </div>
+
+        <!-- Kartu 4: Tren -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Pertumbuhan Kepatuhan</h3>
+                <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded">Tren YoY</span>
+            </div>
+            <div class="flex items-center gap-2 mt-4">
+                <p class="text-4xl font-black text-indigo-600" id="kpiGrowth">0%</p>
+                <span id="growthIcon" class="text-2xl"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visualisasi Grafik -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        
+        <!-- Grafik Bar: Komparasi 2024 vs 2025 per Jenis -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Komparasi Laik HSP Berdasarkan Jenis TPP</h3>
+            <div class="relative h-80 w-full">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Grafik Doughnut: Proporsi Jenis TPP -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Distribusi Total TPP Berdasarkan Jenis</h3>
+            <div class="relative h-80 w-full flex justify-center">
+                <canvas id="doughnutChart"></canvas>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Datagrid / Tabel Interaktif -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-12">
+        <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+            <h3 class="text-lg font-bold text-slate-800">Rincian Data TPP</h3>
+            <span class="text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full font-medium border border-slate-200" id="tableRecordCount">Menampilkan 0 data</span>
+        </div>
+        <div class="overflow-x-auto table-container max-h-[600px]">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-black border-b border-slate-200 sticky top-0 z-10">
+                    <tr>
+                        <th class="p-4" onclick="handleSort('No')">No <span id="sort-No"></span></th>
+                        <th class="p-4" onclick="handleSort('Nama_TPP')">Nama TPP <span id="sort-Nama_TPP"></span></th>
+                        <th class="p-4" onclick="handleSort('Jenis_TPP')">Jenis TPP <span id="sort-Jenis_TPP"></span></th>
+                        <th class="p-4" onclick="handleSort('Puskesmas')">Puskesmas <span id="sort-Puskesmas"></span></th>
+                        <th class="p-4" onclick="handleSort('Kecamatan')">Kecamatan <span id="sort-Kecamatan"></span></th>
+                        <th class="p-4 text-center" onclick="handleSort('Laik_2024')">Status 2024 <span id="sort-Laik_2024"></span></th>
+                        <th class="p-4 text-center" onclick="handleSort('Laik_2025')">Status 2025 <span id="sort-Laik_2025"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700">
+                    <!-- Baris tabel akan di-render menggunakan JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <script>
+        /**
+         * State Management
+         * Menyimpan seluruh status aplikasi agar sinkron antar komponen.
+         */
+        let state = {
+            masterData: [],      // Data asli (hasil mock up atau file CSV)
+            filteredData: [],    // Data setelah difilter (digunakan untuk KPI, Chart, Tabel)
+            sortColumn: 'No',    // Kolom pengurutan default
+            sortAsc: true,       // Arah pengurutan (true = A-Z/Naik, false = Z-A/Turun)
+            charts: {
+                bar: null,
+                doughnut: null
+            }
+        };
+
+        /**
+         * Fungsi Utama: Menarik Data Langsung Dari Google Sheets
+         */
+        function fetchDataFromGoogleSheet() {
+            try {
+                const statusMessage = document.getElementById('statusMessage');
+                const lastUpdated = document.getElementById('lastUpdated');
+                
+                statusMessage.style.display = 'block';
+                statusMessage.classList.replace('bg-emerald-50', 'bg-blue-50');
+                statusMessage.classList.replace('text-emerald-700', 'text-blue-700');
+                statusMessage.classList.replace('border-emerald-200', 'border-blue-200');
+                statusMessage.innerHTML = `<span class="animate-pulse font-semibold">Mengunduh data langsung dari Google Sheets... Mohon tunggu (mungkin butuh waktu karena data besar).</span>`;
+                
+                // ID Google Sheets yang Anda berikan
+                const sheetId = '1r38gsPUYCcJx3be4eLU3rqHkoqKKYDQU-_T9e37RkHk';
+                
+                // SOLUSI: Menggunakan endpoint gviz/tq (Google Visualization API) 
+                // Alasan: Endpoint ini dapat melewati layar peringatan "File terlalu besar untuk di-scan virus" 
+                // dan mengembalikan header CORS yang benar secara konsisten untuk data berukuran besar.
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+                Papa.parse(csvUrl, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        try {
+                            const parsedData = results.data;
+                            
+                            // Pemetaan header CSV ke format aplikasi
+                            const mappedData = parsedData.map(row => {
+                                return {
+                                    No: row['No.'] || row['No'] || '-',
+                                    Provinsi: row['Provinsi'] || '-',
+                                    Kabupaten_Kota: row['Kabupaten/Kota'] || row['Kabupaten_Kota'] || '-',
+                                    Kecamatan: row['Kecamatan'] || '-',
+                                    Kelurahan: row['Kelurahan'] || '-',
+                                    Puskesmas: row['Puskesmas'] || '-',
+                                    Jenis_TPP: row['Jenis TPP'] || row['Jenis_TPP'] || '-',
+                                    Laik_2024: parseInt(row['Laik HSP 2024']) || parseInt(row['Laik_2024']) || 0,
+                                    Laik_2025: parseInt(row['Laik HSP 2025']) || parseInt(row['Laik_2025']) || 0,
+                                    Nama_TPP: row['Nama TPP'] || row['Nama_TPP'] || '-',
+                                    Alamat: row['Alamat'] || '-'
+                                };
+                            });
+
+                            state.masterData = mappedData;
+                            state.filteredData = [...state.masterData];
+
+                            // Update Status
+                            statusMessage.classList.replace('bg-blue-50', 'bg-emerald-50');
+                            statusMessage.classList.replace('text-blue-700', 'text-emerald-700');
+                            statusMessage.classList.replace('border-blue-200', 'border-emerald-200');
+                            statusMessage.innerHTML = `<span class="font-bold">Berhasil!</span> Data dari Google Sheets berhasil dimuat. Total data: ${state.masterData.length.toLocaleString('id-ID')} baris.`;
+                            
+                            const date = new Date();
+                            lastUpdated.innerText = `Sinkronisasi Terakhir: ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} WIB`;
+
+                            // Inisialisasi UI
+                            setupDropdownOptions();
+                            setupEventListeners();
+                            renderDashboard();
+
+                            setTimeout(() => {
+                                statusMessage.style.display = 'none';
+                            }, 6000);
+
+                        } catch (mappingError) {
+                            console.error("Gagal memetakan data CSV dari Google Sheets:", mappingError);
+                            alert("Format kolom Google Sheets tidak sesuai. Pastikan header kolom belum diubah.");
+                        }
+                    },
+                    error: function(err) {
+                        try {
+                            console.error("Error mengunduh dari Google Sheets:", err);
+                            statusMessage.classList.replace('bg-blue-50', 'bg-rose-50');
+                            statusMessage.classList.replace('text-blue-700', 'text-rose-700');
+                            statusMessage.classList.replace('border-blue-200', 'border-rose-200');
+                            statusMessage.innerHTML = `<span class="font-bold">Gagal!</span> Tidak dapat mengunduh data dari Google Sheets. Pastikan akses dibagikan ke Publik (Anyone with the link). Detail: ${err.message}`;
+                        } catch (e) {
+                            console.error("Error updating status message:", e);
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Kesalahan inisialisasi koneksi:", error);
+                alert("Terjadi kesalahan sistem saat mencoba menarik data: " + error.message);
+            }
+        }
+
+        /**
+         * Mengisi Opsi Dropdown secara Dinamis
+         */
+        function setupDropdownOptions() {
+            try {
+                const getUnique = (key) => [...new Set(state.masterData.map(item => item[key]))].filter(val => val && val !== '-').sort();
+
+                populateSelect('provinsiFilter', getUnique('Provinsi'), 'Semua Provinsi');
+                populateSelect('kabupatenFilter', getUnique('Kabupaten_Kota'), 'Semua Kab/Kota');
+                populateSelect('kecamatanFilter', getUnique('Kecamatan'), 'Semua Kecamatan');
+                populateSelect('puskesmasFilter', getUnique('Puskesmas'), 'Semua Puskesmas');
+                populateSelect('jenisFilter', getUnique('Jenis_TPP'), 'Semua Jenis');
+
+            } catch (error) {
+                console.error("Error pada setupDropdownOptions:", error);
+            }
+        }
+
+        /**
+         * Helper untuk mengisi tag <select> HTML
+         */
+        function populateSelect(elementId, optionsArray, defaultText) {
+            try {
+                const selectEl = document.getElementById(elementId);
+                selectEl.innerHTML = `<option value="all">${defaultText}</option>`;
+                optionsArray.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    selectEl.appendChild(option);
+                });
+            } catch (error) {
+                console.error(`Error populating select ${elementId}:`, error);
+            }
+        }
+
+        /**
+         * Menyambungkan aksi pengguna (onChange, onInput, onClick) ke fungsi filter
+         */
+        function setupEventListeners() {
+            try {
+                const filters = ['provinsiFilter', 'kabupatenFilter', 'kecamatanFilter', 'puskesmasFilter', 'jenisFilter'];
+                filters.forEach(id => {
+                    document.getElementById(id).addEventListener('change', applyFilters);
+                });
+
+                document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+                document.getElementById('resetFilterBtn').addEventListener('click', () => {
+                    filters.forEach(id => document.getElementById(id).value = 'all');
+                    document.getElementById('searchInput').value = '';
+                    applyFilters();
+                });
+            } catch (error) {
+                console.error("Error pada setupEventListeners:", error);
+            }
+        }
+
+        /**
+         * Logika Filter Inti
+         */
+        function applyFilters() {
+            try {
+                const fProv = document.getElementById('provinsiFilter').value;
+                const fKab = document.getElementById('kabupatenFilter').value;
+                const fKec = document.getElementById('kecamatanFilter').value;
+                const fPusk = document.getElementById('puskesmasFilter').value;
+                const fJenis = document.getElementById('jenisFilter').value;
+                const fSearch = document.getElementById('searchInput').value.toLowerCase();
+
+                state.filteredData = state.masterData.filter(item => {
+                    const matchProv = (fProv === 'all') || (item.Provinsi === fProv);
+                    const matchKab = (fKab === 'all') || (item.Kabupaten_Kota === fKab);
+                    const matchKec = (fKec === 'all') || (item.Kecamatan === fKec);
+                    const matchPusk = (fPusk === 'all') || (item.Puskesmas === fPusk);
+                    const matchJenis = (fJenis === 'all') || (item.Jenis_TPP === fJenis);
+                    
+                    const searchTarget = `${item.Nama_TPP} ${item.Alamat}`.toLowerCase();
+                    const matchSearch = searchTarget.includes(fSearch);
+
+                    return matchProv && matchKab && matchKec && matchPusk && matchJenis && matchSearch;
+                });
+
+                executeSort();
+                renderDashboard();
+
+            } catch (error) {
+                console.error("Error pada applyFilters:", error);
+            }
+        }
+
+        /**
+         * Render Utama Dashboard
+         */
+        function renderDashboard() {
+            try {
+                updateKPIs();
+                updateCharts();
+                renderTable();
+            } catch (error) {
+                console.error("Error pada renderDashboard:", error);
+            }
+        }
+
+        /**
+         * Kalkulasi dan Update Hero KPI Cards
+         */
+        function updateKPIs() {
+            try {
+                const total = state.filteredData.length;
+                let laik24 = 0;
+                let laik25 = 0;
+
+                state.filteredData.forEach(item => {
+                    if (Number(item.Laik_2024) === 1) laik24++;
+                    if (Number(item.Laik_2025) === 1) laik25++;
+                });
+
+                const pct24 = total > 0 ? Math.round((laik24 / total) * 100) : 0;
+                const pct25 = total > 0 ? Math.round((laik25 / total) * 100) : 0;
+                
+                let growth = 0;
+                if (laik24 > 0) {
+                    growth = Math.round(((laik25 - laik24) / laik24) * 100);
+                } else if (laik24 === 0 && laik25 > 0) {
+                    growth = 100;
+                }
+
+                // Update DOM
+                document.getElementById('kpiTotal').innerText = total.toLocaleString('id-ID');
+                
+                document.getElementById('kpiLaik2024').innerText = laik24.toLocaleString('id-ID');
+                document.getElementById('kpiPersen2024').innerText = `(${pct24}%)`;
+                
+                document.getElementById('kpiLaik2025').innerText = laik25.toLocaleString('id-ID');
+                document.getElementById('kpiPersen2025').innerText = `(${pct25}%)`;
+
+                const kpiGrowthEl = document.getElementById('kpiGrowth');
+                const growthIconEl = document.getElementById('growthIcon');
+                
+                if (growth > 0) {
+                    kpiGrowthEl.innerText = `+${growth}%`;
+                    kpiGrowthEl.className = "text-4xl font-black text-emerald-600";
+                    growthIconEl.innerText = "📈";
+                } else if (growth < 0) {
+                    kpiGrowthEl.innerText = `${growth}%`;
+                    kpiGrowthEl.className = "text-4xl font-black text-rose-600";
+                    growthIconEl.innerText = "📉";
+                } else {
+                    kpiGrowthEl.innerText = `${growth}%`;
+                    kpiGrowthEl.className = "text-4xl font-black text-slate-400";
+                    growthIconEl.innerText = "➖";
+                }
+
+            } catch (error) {
+                console.error("Error pada updateKPIs:", error);
+            }
+        }
+
+        /**
+         * Update Grafik menggunakan Chart.js
+         */
+        function updateCharts() {
+            try {
+                // Batasi top 15 jenis TPP terbanyak jika jenisnya terlalu banyak agar grafik tidak rusak
+                const aggData = {};
+                state.filteredData.forEach(item => {
+                    const jenis = item.Jenis_TPP || 'Tidak Diketahui';
+                    if (!aggData[jenis]) {
+                        aggData[jenis] = { total: 0, laik24: 0, laik25: 0 };
+                    }
+                    aggData[jenis].total++;
+                    if (Number(item.Laik_2024) === 1) aggData[jenis].laik24++;
+                    if (Number(item.Laik_2025) === 1) aggData[jenis].laik25++;
+                });
+
+                // Mengurutkan dan mengambil top 15 saja
+                let sortedKeys = Object.keys(aggData).sort((a,b) => aggData[b].total - aggData[a].total).slice(0, 15);
+                
+                const labels = sortedKeys;
+                const dataTotal = labels.map(l => aggData[l].total);
+                const dataLaik24 = labels.map(l => aggData[l].laik24);
+                const dataLaik25 = labels.map(l => aggData[l].laik25);
+
+                const color24 = 'rgba(148, 163, 184, 0.7)'; // slate-400
+                const color25 = 'rgba(16, 185, 129, 0.9)';  // emerald-500
+                const colorDonut = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16'];
+
+                // Bar Chart
+                const barCtx = document.getElementById('barChart').getContext('2d');
+                if (state.charts.bar) state.charts.bar.destroy();
+                state.charts.bar = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Laik HSP 2024', data: dataLaik24, backgroundColor: color24, borderRadius: 4 },
+                            { label: 'Laik HSP 2025', data: dataLaik25, backgroundColor: color25, borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+
+                // Doughnut Chart
+                const doughCtx = document.getElementById('doughnutChart').getContext('2d');
+                if (state.charts.doughnut) state.charts.doughnut.destroy();
+                state.charts.doughnut = new Chart(doughCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: dataTotal, backgroundColor: colorDonut, borderWidth: 0, hoverOffset: 4 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } },
+                        cutout: '65%'
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error pada updateCharts:", error);
+            }
+        }
+
+        /**
+         * Render Data ke dalam Elemen Tabel HTML
+         */
+        function renderTable() {
+            try {
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                // PENTING: Untuk mencegah browser hang saat memuat file masif,
+                // kita hanya merender 500 baris pertama di tabel. 
+                // Namun KPI & Grafik tetap diproses 100% dari keseluruhan data.
+                const MAX_RENDER = 500; 
+                const renderData = state.filteredData.slice(0, MAX_RENDER);
+                
+                let countText = `Menampilkan ${state.filteredData.length.toLocaleString('id-ID')} data`;
+                if(state.filteredData.length > MAX_RENDER) {
+                    countText = `Menampilkan ${MAX_RENDER} dari ${state.filteredData.length.toLocaleString('id-ID')} data (dibatasi agar browser tidak lambat)`;
+                }
+                document.getElementById('tableRecordCount').innerText = countText;
+
+                if (renderData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500 italic">Tidak ada data yang sesuai dengan filter pencarian.</td></tr>`;
+                    return;
+                }
+
+                // Gunakan DocumentFragment untuk performa render DOM yang lebih cepat
+                const fragment = document.createDocumentFragment();
+
+                renderData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0';
+
+                    const badge24 = Number(item.Laik_2024) === 1 
+                        ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wide border border-emerald-200">Laik</span>` 
+                        : `<span class="px-2 py-1 rounded bg-slate-100 text-slate-500 font-bold text-[10px] uppercase tracking-wide border border-slate-200">Tidak</span>`;
+                    
+                    const badge25 = Number(item.Laik_2025) === 1 
+                        ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wide border border-emerald-200">Laik</span>` 
+                        : `<span class="px-2 py-1 rounded bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide border border-rose-200">Tidak</span>`;
+
+                    row.innerHTML = `
+                        <td class="p-4 text-slate-600 font-medium">${item.No}</td>
+                        <td class="p-4">
+                            <div class="font-bold text-slate-800">${item.Nama_TPP}</div>
+                            <div class="text-xs text-slate-500 max-w-xs truncate mt-0.5" title="${item.Alamat}">${item.Alamat || '-'}</div>
+                        </td>
+                        <td class="p-4"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[11px] font-semibold border border-blue-100 whitespace-nowrap">${item.Jenis_TPP}</span></td>
+                        <td class="p-4 text-slate-600 font-medium">${item.Puskesmas}</td>
+                        <td class="p-4 text-slate-600 font-medium">${item.Kecamatan}</td>
+                        <td class="p-4 text-center">${badge24}</td>
+                        <td class="p-4 text-center">${badge25}</td>
+                    `;
+                    fragment.appendChild(row);
+                });
+
+                tbody.appendChild(fragment);
+
+            } catch (error) {
+                console.error("Error pada renderTable:", error);
+            }
+        }
+
+        /**
+         * Logika Pemanggilan Pengurutan (Sorting) Tabel
+         */
+        function handleSort(columnName) {
+            try {
+                if (state.sortColumn === columnName) {
+                    state.sortAsc = !state.sortAsc;
+                } else {
+                    state.sortColumn = columnName;
+                    state.sortAsc = true; 
+                }
+
+                ['No', 'Nama_TPP', 'Jenis_TPP', 'Puskesmas', 'Kecamatan', 'Laik_2024', 'Laik_2025'].forEach(col => {
+                    const iconEl = document.getElementById(`sort-${col}`);
+                    if(iconEl) iconEl.innerText = '';
+                });
+
+                const activeIconEl = document.getElementById(`sort-${columnName}`);
+                if (activeIconEl) {
+                    activeIconEl.innerText = state.sortAsc ? '▲' : '▼';
+                    activeIconEl.className = 'text-blue-600 ml-1 text-[10px]';
+                }
+
+                executeSort();
+                renderTable(); 
+
+            } catch (error) {
+                console.error("Error pada handleSort:", error);
+            }
+        }
+
+        /**
+         * Eksekusi Pengurutan Array Data
+         */
+        function executeSort() {
+            try {
+                const col = state.sortColumn;
+                const asc = state.sortAsc ? 1 : -1;
+
+                state.filteredData.sort((a, b) => {
+                    let valA = a[col];
+                    let valB = b[col];
+
+                    if (['No', 'Laik_2024', 'Laik_2025'].includes(col)) {
+                        valA = Number(valA);
+                        valB = Number(valB);
+                    } else {
+                        valA = (valA || '').toString().toLowerCase();
+                        valB = (valB || '').toString().toLowerCase();
+                    }
+
+                    if (valA < valB) return -1 * asc;
+                    if (valA > valB) return 1 * asc;
+                    return 0;
+                });
+            } catch (error) {
+                console.error("Error pada executeSort:", error);
+            }
+        }
+
+        // --- Entry Point ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchDataFromGoogleSheet();
+        });
+
+    </script>
+</body>
+</html>
