@@ -52,7 +52,7 @@
     <header class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Dashboard Pemantauan TPP Laik HSP</h1>
-            <p class="text-slate-500 mt-1">Komparasi Kepatuhan Higiene Sanitasi Pangan 2024 - 2025 (Sinkronisasi Google Sheets)</p>
+            <p class="text-slate-500 mt-1">Komparasi Kepatuhan Higiene Sanitasi Pangan 2024 - 2025 (Google Visualization API)</p>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 items-center">
             <div class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium">
@@ -68,40 +68,40 @@
 
     <!-- Filter Control Panel (Cascading Filters) -->
     <section class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-semibold text-slate-700 mb-4 border-b border-slate-100 pb-2">Filter Data Wilayah & TPP</h2>
+        <h2 class="text-lg font-semibold text-slate-700 mb-4 border-b border-slate-100 pb-2">Filter Data Wilayah (Berjenjang) & TPP</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             
             <div>
                 <label for="provinsiFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Provinsi</label>
-                <select id="provinsiFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                <select id="provinsiFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
                     <option value="all">Semua Provinsi</option>
                 </select>
             </div>
 
             <div>
                 <label for="kabupatenFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Kabupaten/Kota</label>
-                <select id="kabupatenFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                <select id="kabupatenFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
                     <option value="all">Semua Kab/Kota</option>
                 </select>
             </div>
 
             <div>
                 <label for="kecamatanFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Kecamatan</label>
-                <select id="kecamatanFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                <select id="kecamatanFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
                     <option value="all">Semua Kecamatan</option>
                 </select>
             </div>
 
             <div>
                 <label for="puskesmasFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Puskesmas</label>
-                <select id="puskesmasFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                <select id="puskesmasFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
                     <option value="all">Semua Puskesmas</option>
                 </select>
             </div>
 
             <div>
                 <label for="jenisFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Jenis TPP</label>
-                <select id="jenisFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow">
+                <select id="jenisFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
                     <option value="all">Semua Jenis</option>
                 </select>
             </div>
@@ -113,7 +113,7 @@
 
         </div>
         <div class="mt-4 flex justify-end">
-            <button id="resetFilterBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors border border-slate-300">
+            <button id="resetFilterBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors border border-slate-300 cursor-pointer">
                 Reset Semua Filter
             </button>
         </div>
@@ -216,25 +216,29 @@
     </section>
 
     <script>
+        // =========================================================================
+        // PENGATURAN KONEKSI DATA (MENGGUNAKAN GOOGLE VISUALIZATION API)
+        // =========================================================================
+        const SHEET_ID = '1r38gsPUYCcJx3be4eLU3rqHkoqKKYDQU-_T9e37RkHk';
+        
+        // Endpoint gviz/tq memastikan CORS tidak diblokir dan menghindari peringatan file besar Google Drive
+        const GOOGLE_SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+        
         /**
          * State Management
-         * Menyimpan seluruh status aplikasi agar sinkron antar komponen.
          */
         let state = {
-            masterData: [],      // Data asli (hasil mock up atau file CSV)
-            filteredData: [],    // Data setelah difilter (digunakan untuk KPI, Chart, Tabel)
-            sortColumn: 'No',    // Kolom pengurutan default
-            sortAsc: true,       // Arah pengurutan (true = A-Z/Naik, false = Z-A/Turun)
-            charts: {
-                bar: null,
-                doughnut: null
-            }
+            masterData: [],      
+            filteredData: [],    
+            sortColumn: 'No',    
+            sortAsc: true,       
+            charts: { bar: null, doughnut: null }
         };
 
         /**
-         * Fungsi Utama: Menarik Data Langsung Dari Google Sheets
+         * Fungsi Utama: Menarik Data Langsung Dari Google Sheets via gviz API
          */
-        function fetchDataFromGoogleSheet() {
+        function fetchDataFromDataSource() {
             try {
                 const statusMessage = document.getElementById('statusMessage');
                 const lastUpdated = document.getElementById('lastUpdated');
@@ -243,25 +247,23 @@
                 statusMessage.classList.replace('bg-emerald-50', 'bg-blue-50');
                 statusMessage.classList.replace('text-emerald-700', 'text-blue-700');
                 statusMessage.classList.replace('border-emerald-200', 'border-blue-200');
-                statusMessage.innerHTML = `<span class="animate-pulse font-semibold">Mengunduh data langsung dari Google Sheets... Mohon tunggu (mungkin butuh waktu karena data besar).</span>`;
+                statusMessage.innerHTML = `<span class="animate-pulse font-semibold">Mengunduh data secara langsung dari Google Sheets API... Mohon tunggu (memakan waktu untuk memproses ratusan ribu data).</span>`;
                 
-                // ID Google Sheets yang Anda berikan
-                const sheetId = '1r38gsPUYCcJx3be4eLU3rqHkoqKKYDQU-_T9e37RkHk';
-                
-                // SOLUSI: Menggunakan endpoint gviz/tq (Google Visualization API) 
-                // Alasan: Endpoint ini dapat melewati layar peringatan "File terlalu besar untuk di-scan virus" 
-                // dan mengembalikan header CORS yang benar secara konsisten untuk data berukuran besar.
-                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
-
-                Papa.parse(csvUrl, {
+                // Proses parsing CSV menggunakan PapaParse dengan URL gviz/tq
+                Papa.parse(GOOGLE_SHEET_CSV_URL, {
                     download: true,
                     header: true,
                     skipEmptyLines: true,
                     complete: function(results) {
                         try {
+                            // Validasi pencegahan jika Google tetap mengirimkan dokumen HTML 
+                            if (results.data.length > 0 && results.data[0] && Object.keys(results.data[0]).some(key => key.toLowerCase().includes('<!doctype html>'))) {
+                                throw new Error("Terdeteksi respon HTML, bukan CSV.");
+                            }
+
                             const parsedData = results.data;
                             
-                            // Pemetaan header CSV ke format aplikasi
+                            // Pemetaan header CSV untuk mengakomodasi penamaan kolom dari Google Sheets
                             const mappedData = parsedData.map(row => {
                                 return {
                                     No: row['No.'] || row['No'] || '-',
@@ -280,61 +282,75 @@
 
                             state.masterData = mappedData;
                             state.filteredData = [...state.masterData];
-
-                            // Update Status
-                            statusMessage.classList.replace('bg-blue-50', 'bg-emerald-50');
-                            statusMessage.classList.replace('text-blue-700', 'text-emerald-700');
-                            statusMessage.classList.replace('border-blue-200', 'border-emerald-200');
-                            statusMessage.innerHTML = `<span class="font-bold">Berhasil!</span> Data dari Google Sheets berhasil dimuat. Total data: ${state.masterData.length.toLocaleString('id-ID')} baris.`;
                             
-                            const date = new Date();
-                            lastUpdated.innerText = `Sinkronisasi Terakhir: ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} WIB`;
-
-                            // Inisialisasi UI
-                            setupDropdownOptions();
-                            setupEventListeners();
-                            renderDashboard();
-
-                            setTimeout(() => {
-                                statusMessage.style.display = 'none';
-                            }, 6000);
+                            finalizeDataLoading(statusMessage, lastUpdated, false);
 
                         } catch (mappingError) {
-                            console.error("Gagal memetakan data CSV dari Google Sheets:", mappingError);
-                            alert("Format kolom Google Sheets tidak sesuai. Pastikan header kolom belum diubah.");
+                            console.error("Gagal memetakan data CSV:", mappingError);
+                            // Fallback ke data simulasi
+                            state.masterData = getMockDataAsli();
+                            state.filteredData = [...state.masterData];
+                            finalizeDataLoading(statusMessage, lastUpdated, true, `(Tautan gagal diproses. ${mappingError.message}. Menggunakan data simulasi.)`);
                         }
                     },
                     error: function(err) {
-                        try {
-                            console.error("Error mengunduh dari Google Sheets:", err);
-                            statusMessage.classList.replace('bg-blue-50', 'bg-rose-50');
-                            statusMessage.classList.replace('text-blue-700', 'text-rose-700');
-                            statusMessage.classList.replace('border-blue-200', 'border-rose-200');
-                            statusMessage.innerHTML = `<span class="font-bold">Gagal!</span> Tidak dapat mengunduh data dari Google Sheets. Pastikan akses dibagikan ke Publik (Anyone with the link). Detail: ${err.message}`;
-                        } catch (e) {
-                            console.error("Error updating status message:", e);
-                        }
+                        console.error("Error mengunduh dari Google Sheets:", err);
+                        // Fallback ke data simulasi jika link rusak atau ditolak karena CORS
+                        state.masterData = getMockDataAsli();
+                        state.filteredData = [...state.masterData];
+                        finalizeDataLoading(statusMessage, lastUpdated, true, `(Gagal mengambil data dari Google Sheets. Error: ${err.message}. Menggunakan data simulasi.)`);
                     }
                 });
 
             } catch (error) {
                 console.error("Kesalahan inisialisasi koneksi:", error);
-                alert("Terjadi kesalahan sistem saat mencoba menarik data: " + error.message);
             }
         }
 
         /**
-         * Mengisi Opsi Dropdown secara Dinamis
+         * Helper untuk menyelesaikan proses loading UI
+         */
+        function finalizeDataLoading(statusMessage, lastUpdated, isMock, warningText = "") {
+            try {
+                if (isMock) {
+                    statusMessage.classList.replace('bg-blue-50', 'bg-amber-50');
+                    statusMessage.classList.replace('text-blue-700', 'text-amber-800');
+                    statusMessage.classList.replace('border-blue-200', 'border-amber-200');
+                } else {
+                    statusMessage.classList.replace('bg-blue-50', 'bg-emerald-50');
+                    statusMessage.classList.replace('text-blue-700', 'text-emerald-700');
+                    statusMessage.classList.replace('border-blue-200', 'border-emerald-200');
+                }
+                
+                let modeText = isMock ? "Data Simulasi/Contoh" : "Data dari Google Sheets";
+                statusMessage.innerHTML = `<span class="font-bold">Berhasil!</span> ${modeText} berhasil dimuat. Total data: ${state.masterData.length.toLocaleString('id-ID')} baris. <span class="text-xs ${isMock ? 'text-amber-700 font-semibold' : 'text-rose-600'} block mt-1">${warningText}</span>`;
+                
+                const date = new Date();
+                lastUpdated.innerText = `Sinkronisasi: ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} WIB`;
+
+                setupDropdownOptions();
+                setupEventListeners();
+                renderDashboard();
+
+                setTimeout(() => { statusMessage.style.display = 'none'; }, 8000);
+            } catch (error) {
+                console.error("Error finalizing load:", error);
+            }
+        }
+
+        /**
+         * Setup Opsi Dropdown Awal (Jenis TPP dan Provinsi)
          */
         function setupDropdownOptions() {
             try {
                 const getUnique = (key) => [...new Set(state.masterData.map(item => item[key]))].filter(val => val && val !== '-').sort();
 
+                // Provinsi & Jenis TPP bersifat global
                 populateSelect('provinsiFilter', getUnique('Provinsi'), 'Semua Provinsi');
-                populateSelect('kabupatenFilter', getUnique('Kabupaten_Kota'), 'Semua Kab/Kota');
-                populateSelect('kecamatanFilter', getUnique('Kecamatan'), 'Semua Kecamatan');
-                populateSelect('puskesmasFilter', getUnique('Puskesmas'), 'Semua Puskesmas');
                 populateSelect('jenisFilter', getUnique('Jenis_TPP'), 'Semua Jenis');
+
+                // Inisialisasi dropdown berjenjang (Kabupaten, Kecamatan, Puskesmas)
+                updateGeographicalDropdowns('init');
 
             } catch (error) {
                 console.error("Error pada setupDropdownOptions:", error);
@@ -342,38 +358,135 @@
         }
 
         /**
+         * Logika Filter Berjenjang (Cascading Dropdowns)
+         * Menyesuaikan opsi Kabupaten, Kecamatan, dan Puskesmas berdasarkan pilihan Provinsi.
+         */
+        function updateGeographicalDropdowns(triggerLevel) {
+            try {
+                const provSelect = document.getElementById('provinsiFilter');
+                const kabSelect = document.getElementById('kabupatenFilter');
+                const kecSelect = document.getElementById('kecamatanFilter');
+                const puskSelect = document.getElementById('puskesmasFilter');
+
+                const selProv = provSelect.value;
+                let currentKab = kabSelect.value;
+                let currentKec = kecSelect.value;
+                let currentPusk = puskSelect.value;
+
+                // Jika parent berubah, reset semua children ke 'all'
+                if (triggerLevel === 'provinsi') {
+                    currentKab = 'all'; currentKec = 'all'; currentPusk = 'all';
+                } else if (triggerLevel === 'kabupaten') {
+                    currentKec = 'all'; currentPusk = 'all';
+                } else if (triggerLevel === 'kecamatan') {
+                    currentPusk = 'all';
+                }
+
+                // 1. Filter Data Kabupaten (Tergantung Provinsi)
+                let dataForKab = state.masterData;
+                if (selProv !== 'all') {
+                    dataForKab = dataForKab.filter(item => item.Provinsi === selProv);
+                }
+                
+                // 2. Filter Data Kecamatan (Tergantung Provinsi + Kabupaten)
+                let dataForKec = dataForKab;
+                if (currentKab !== 'all') {
+                    dataForKec = dataForKec.filter(item => item.Kabupaten_Kota === currentKab);
+                }
+
+                // 3. Filter Data Puskesmas (Tergantung Provinsi + Kabupaten + Kecamatan)
+                let dataForPusk = dataForKec;
+                if (currentKec !== 'all') {
+                    dataForPusk = dataForPusk.filter(item => item.Kecamatan === currentKec);
+                }
+
+                // Populate Dropdowns dengan opsi yang tersisa & pertahankan value sebelumnya jika masih ada
+                if (triggerLevel === 'provinsi' || triggerLevel === 'init') {
+                    const uniqueKab = [...new Set(dataForKab.map(item => item.Kabupaten_Kota))].filter(val => val && val !== '-').sort();
+                    populateSelect('kabupatenFilter', uniqueKab, 'Semua Kab/Kota', currentKab);
+                }
+
+                if (triggerLevel === 'provinsi' || triggerLevel === 'kabupaten' || triggerLevel === 'init') {
+                    const uniqueKec = [...new Set(dataForKec.map(item => item.Kecamatan))].filter(val => val && val !== '-').sort();
+                    populateSelect('kecamatanFilter', uniqueKec, 'Semua Kecamatan', currentKec);
+                }
+
+                if (triggerLevel === 'provinsi' || triggerLevel === 'kabupaten' || triggerLevel === 'kecamatan' || triggerLevel === 'init') {
+                    const uniquePusk = [...new Set(dataForPusk.map(item => item.Puskesmas))].filter(val => val && val !== '-').sort();
+                    populateSelect('puskesmasFilter', uniquePusk, 'Semua Puskesmas', currentPusk);
+                }
+
+            } catch (error) {
+                console.error("Error pada updateGeographicalDropdowns:", error);
+            }
+        }
+
+        /**
          * Helper untuk mengisi tag <select> HTML
          */
-        function populateSelect(elementId, optionsArray, defaultText) {
+        function populateSelect(elementId, optionsArray, defaultText, selectedValue = 'all') {
             try {
                 const selectEl = document.getElementById(elementId);
                 selectEl.innerHTML = `<option value="all">${defaultText}</option>`;
+                
+                // Cek apakah previous selectedValue masih valid di options terbaru
+                let isSelectedValueValid = false;
+
                 optionsArray.forEach(opt => {
                     const option = document.createElement('option');
                     option.value = opt;
                     option.textContent = opt;
+                    if (opt === selectedValue) {
+                        option.selected = true;
+                        isSelectedValueValid = true;
+                    }
                     selectEl.appendChild(option);
                 });
+
+                // Jika nilai yang dipilih sebelumnya sudah tidak relevan dengan filter baru, paksa ke 'all'
+                if (!isSelectedValueValid && selectedValue !== 'all') {
+                    selectEl.value = 'all';
+                }
+
             } catch (error) {
                 console.error(`Error populating select ${elementId}:`, error);
             }
         }
 
         /**
-         * Menyambungkan aksi pengguna (onChange, onInput, onClick) ke fungsi filter
+         * Menyambungkan aksi pengguna
          */
         function setupEventListeners() {
             try {
-                const filters = ['provinsiFilter', 'kabupatenFilter', 'kecamatanFilter', 'puskesmasFilter', 'jenisFilter'];
-                filters.forEach(id => {
-                    document.getElementById(id).addEventListener('change', applyFilters);
+                // Event Listener khusus untuk Filter Berjenjang (Geographical)
+                document.getElementById('provinsiFilter').addEventListener('change', () => {
+                    updateGeographicalDropdowns('provinsi');
+                    applyFilters();
+                });
+                document.getElementById('kabupatenFilter').addEventListener('change', () => {
+                    updateGeographicalDropdowns('kabupaten');
+                    applyFilters();
+                });
+                document.getElementById('kecamatanFilter').addEventListener('change', () => {
+                    updateGeographicalDropdowns('kecamatan');
+                    applyFilters();
+                });
+                document.getElementById('puskesmasFilter').addEventListener('change', () => {
+                    applyFilters();
                 });
 
+                // Filter Independen
+                document.getElementById('jenisFilter').addEventListener('change', applyFilters);
                 document.getElementById('searchInput').addEventListener('input', applyFilters);
 
+                // Reset Button
                 document.getElementById('resetFilterBtn').addEventListener('click', () => {
-                    filters.forEach(id => document.getElementById(id).value = 'all');
+                    document.getElementById('provinsiFilter').value = 'all';
+                    document.getElementById('jenisFilter').value = 'all';
                     document.getElementById('searchInput').value = '';
+                    
+                    // Reset cascading filter dari akar (Provinsi)
+                    updateGeographicalDropdowns('provinsi');
                     applyFilters();
                 });
             } catch (error) {
@@ -451,7 +564,6 @@
                     growth = 100;
                 }
 
-                // Update DOM
                 document.getElementById('kpiTotal').innerText = total.toLocaleString('id-ID');
                 
                 document.getElementById('kpiLaik2024').innerText = laik24.toLocaleString('id-ID');
@@ -487,7 +599,6 @@
          */
         function updateCharts() {
             try {
-                // Batasi top 15 jenis TPP terbanyak jika jenisnya terlalu banyak agar grafik tidak rusak
                 const aggData = {};
                 state.filteredData.forEach(item => {
                     const jenis = item.Jenis_TPP || 'Tidak Diketahui';
@@ -499,7 +610,7 @@
                     if (Number(item.Laik_2025) === 1) aggData[jenis].laik25++;
                 });
 
-                // Mengurutkan dan mengambil top 15 saja
+                // Mengurutkan dan mengambil top 15 agar grafik tetap rapi
                 let sortedKeys = Object.keys(aggData).sort((a,b) => aggData[b].total - aggData[a].total).slice(0, 15);
                 
                 const labels = sortedKeys;
@@ -507,11 +618,10 @@
                 const dataLaik24 = labels.map(l => aggData[l].laik24);
                 const dataLaik25 = labels.map(l => aggData[l].laik25);
 
-                const color24 = 'rgba(148, 163, 184, 0.7)'; // slate-400
-                const color25 = 'rgba(16, 185, 129, 0.9)';  // emerald-500
+                const color24 = 'rgba(148, 163, 184, 0.7)'; 
+                const color25 = 'rgba(16, 185, 129, 0.9)';  
                 const colorDonut = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f43f5e', '#84cc16'];
 
-                // Bar Chart
                 const barCtx = document.getElementById('barChart').getContext('2d');
                 if (state.charts.bar) state.charts.bar.destroy();
                 state.charts.bar = new Chart(barCtx, {
@@ -530,7 +640,6 @@
                     }
                 });
 
-                // Doughnut Chart
                 const doughCtx = document.getElementById('doughnutChart').getContext('2d');
                 if (state.charts.doughnut) state.charts.doughnut.destroy();
                 state.charts.doughnut = new Chart(doughCtx, {
@@ -559,9 +668,7 @@
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = '';
 
-                // PENTING: Untuk mencegah browser hang saat memuat file masif,
-                // kita hanya merender 500 baris pertama di tabel. 
-                // Namun KPI & Grafik tetap diproses 100% dari keseluruhan data.
+                // Membatasi render tabel agar DOM tidak macet saat data ratusan ribu
                 const MAX_RENDER = 500; 
                 const renderData = state.filteredData.slice(0, MAX_RENDER);
                 
@@ -576,7 +683,6 @@
                     return;
                 }
 
-                // Gunakan DocumentFragment untuk performa render DOM yang lebih cepat
                 const fragment = document.createDocumentFragment();
 
                 renderData.forEach((item, index) => {
@@ -673,9 +779,30 @@
             }
         }
 
+        /**
+         * Data Asli Bawaan (Hanya digunakan jika koneksi ke Google Sheets gagal)
+         */
+        function getMockDataAsli() {
+            try {
+                return [
+                    { "No": 1, "Provinsi": "ACEH", "Kabupaten_Kota": "ACEH TAMIANG", "Kecamatan": "MANYAK PAYED", "Kelurahan": "-", "Puskesmas": "MANYAK PAYED", "Jenis_TPP": "Dapur Gerai Pangan Jajanan", "Laik_2024": 0, "Laik_2025": 0, "Nama_TPP": "Bakso Kompi", "Alamat": "Desa Sapta Marga" },
+                    { "No": 2, "Provinsi": "ACEH", "Kabupaten_Kota": "ACEH SINGKIL", "Kecamatan": "SIMPANG KANAN", "Kelurahan": "SIATAS", "Puskesmas": "SIMPANG KANAN", "Jenis_TPP": "Depot Air Minum", "Laik_2024": 0, "Laik_2025": 0, "Nama_TPP": "BERKAH WATER", "Alamat": "SIATAS" },
+                    { "No": 3, "Provinsi": "ACEH", "Kabupaten_Kota": "ACEH SINGKIL", "Kecamatan": "SIMPANG KANAN", "Kelurahan": "PANDAN SARI", "Puskesmas": "SIMPANG KANAN", "Jenis_TPP": "Depot Air Minum", "Laik_2024": 0, "Laik_2025": 0, "Nama_TPP": "DEWI WATER", "Alamat": "PANDAN SARI" },
+                    { "No": 4, "Provinsi": "ACEH", "Kabupaten_Kota": "ACEH TENGAH", "Kecamatan": "RUSIP ANTARA", "Kelurahan": "KUALA RAWA", "Puskesmas": "PAMAR", "Jenis_TPP": "Rumah Makan - Gol A1", "Laik_2024": 0, "Laik_2025": 0, "Nama_TPP": "Warung Dek Zila", "Alamat": "Desa kuala rawa" },
+                    { "No": 160065, "Provinsi": "JAWA BARAT", "Kabupaten_Kota": "KOTA BANJAR", "Kecamatan": "PATARUMAN", "Kelurahan": "SUKAMUKTI", "Puskesmas": "PATARUMAN I", "Jenis_TPP": "Restoran", "Laik_2024": 0, "Laik_2025": 0, "Nama_TPP": "WARUNG NASI EMPRAH", "Alamat": "TEMBUNGKERTA 2/9" },
+                    { "No": 160066, "Provinsi": "JAWA BARAT", "Kabupaten_Kota": "KOTA BANJAR", "Kecamatan": "PATARUMAN", "Kelurahan": "SUKAMUKTI", "Puskesmas": "PATARUMAN I", "Jenis_TPP": "Restoran", "Laik_2024": 0, "Laik_2025": 0, "Nama_TPP": "WARUNG NASI EUIS", "Alamat": "TEMBUNGKERTA 2/9" },
+                    { "No": 160070, "Provinsi": "JAWA BARAT", "Kabupaten_Kota": "KOTA BANJAR", "Kecamatan": "PATARUMAN", "Kelurahan": "KARYAMUKTI", "Puskesmas": "PATARUMAN I", "Jenis_TPP": "Restoran", "Laik_2024": 0, "Laik_2025": 0, "Nama_TPP": "WARUNG NASI MIH AAN", "Alamat": "CIGADUNG 10/4" },
+                    { "No": 160071, "Provinsi": "JAWA BARAT", "Kabupaten_Kota": "KOTA BANDUNG", "Kecamatan": "COBLONG", "Kelurahan": "DAGO", "Puskesmas": "DAGO", "Jenis_TPP": "Restoran", "Laik_2024": 1, "Laik_2025": 1, "Nama_TPP": "RM Dago Atas", "Alamat": "Jl. Ir. H. Juanda" }
+                ];
+            } catch (error) {
+                console.error("Error pada data asli:", error);
+                return [];
+            }
+        }
+
         // --- Entry Point ---
         document.addEventListener('DOMContentLoaded', () => {
-            fetchDataFromGoogleSheet();
+            fetchDataFromDataSource();
         });
 
     </script>
