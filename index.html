@@ -5,33 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard TPP Laik HSP 2024-2025</title>
     
-    <!-- Tailwind CSS untuk styling -->
+    <!-- Tailwind CSS untuk styling modern -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Chart.js untuk visualisasi grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- PapaParse untuk membaca file CSV asli dengan cepat -->
+    <!-- PapaParse untuk membaca file CSV dengan cepat -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
         body {
-            background-color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-        /* Custom scrollbar untuk tabel */
+        /* Custom scrollbar untuk kenyamanan tampilan tabel */
         .table-container::-webkit-scrollbar {
-            height: 8px;
-            width: 8px;
+            height: 6px;
+            width: 6px;
         }
         .table-container::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-            border-radius: 4px;
+            background: #f1f5f9; 
+            border-radius: 8px;
         }
         .table-container::-webkit-scrollbar-thumb {
             background: #cbd5e1; 
-            border-radius: 4px;
+            border-radius: 8px;
         }
         .table-container::-webkit-scrollbar-thumb:hover {
             background: #94a3b8; 
@@ -39,131 +39,173 @@
 
         th {
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
         }
         th:hover {
-            background-color: #e2e8f0;
+            background-color: #f1f5f9;
+            color: #1e293b;
         }
     </style>
 </head>
-<body class="p-4 md:p-6 lg:p-8">
+<body class="p-4 md:p-6 lg:p-8 text-slate-800 antialiased">
 
     <!-- Header Section -->
-    <header class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+    <header class="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col lg:flex-row justify-between lg:items-center gap-4">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Dashboard Pemantauan TPP Laik HSP</h1>
-            <p class="text-slate-500 mt-1">Komparasi Kepatuhan Higiene Sanitasi Pangan 2024 - 2025 (Google Visualization API)</p>
+            <div class="flex items-center gap-2">
+                <span class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
+                    </svg>
+                </span>
+                <h1 class="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">Dashboard Pemantauan TPP Laik HSP</h1>
+            </div>
+            <p class="text-slate-500 mt-1 text-sm md:text-base">Komparasi Kepatuhan Higiene Sanitasi Pangan 2024 - 2025 (Google Visualization API)</p>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 items-center">
-            <div class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium">
+            <div class="bg-slate-50 text-slate-600 px-4 py-2 rounded-xl border border-slate-200 text-xs md:text-sm font-semibold flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span id="lastUpdated">Menyiapkan koneksi data...</span>
             </div>
         </div>
     </header>
 
     <!-- Status / Loading Indicator -->
-    <div id="statusMessage" class="mb-6 p-4 bg-blue-50 text-blue-700 rounded-md border border-blue-200 shadow-sm transition-all duration-300">
-        Menginisialisasi sistem...
+    <div id="statusMessage" class="mb-6 p-4 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 shadow-sm transition-all duration-300 text-sm font-medium flex items-center gap-2">
+        <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Menginisialisasi sistem...</span>
     </div>
 
     <!-- Filter Control Panel (Cascading Filters) -->
-    <section class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-semibold text-slate-700 mb-4 border-b border-slate-100 pb-2">Filter Data Wilayah (Berjenjang) & TPP</h2>
+    <section class="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+            <h2 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-slate-500">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                </svg>
+                Filter Data Wilayah & TPP
+            </h2>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             
             <div>
-                <label for="provinsiFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Provinsi</label>
-                <select id="provinsiFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
+                <label for="provinsiFilter" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Provinsi</label>
+                <select id="provinsiFilter" class="w-full border border-slate-200 rounded-xl p-3 text-xs md:text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 outline-none transition-all cursor-pointer">
                     <option value="all">Semua Provinsi</option>
                 </select>
             </div>
 
             <div>
-                <label for="kabupatenFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Kabupaten/Kota</label>
-                <select id="kabupatenFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
+                <label for="kabupatenFilter" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Kabupaten/Kota</label>
+                <select id="kabupatenFilter" class="w-full border border-slate-200 rounded-xl p-3 text-xs md:text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 outline-none transition-all cursor-pointer">
                     <option value="all">Semua Kab/Kota</option>
                 </select>
             </div>
 
             <div>
-                <label for="kecamatanFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Kecamatan</label>
-                <select id="kecamatanFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
+                <label for="kecamatanFilter" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Kecamatan</label>
+                <select id="kecamatanFilter" class="w-full border border-slate-200 rounded-xl p-3 text-xs md:text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 outline-none transition-all cursor-pointer">
                     <option value="all">Semua Kecamatan</option>
                 </select>
             </div>
 
             <div>
-                <label for="puskesmasFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Puskesmas</label>
-                <select id="puskesmasFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
+                <label for="puskesmasFilter" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Puskesmas</label>
+                <select id="puskesmasFilter" class="w-full border border-slate-200 rounded-xl p-3 text-xs md:text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 outline-none transition-all cursor-pointer">
                     <option value="all">Semua Puskesmas</option>
                 </select>
             </div>
 
             <div>
-                <label for="jenisFilter" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Jenis TPP</label>
-                <select id="jenisFilter" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none transition-shadow cursor-pointer">
+                <label for="jenisFilter" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Jenis TPP</label>
+                <select id="jenisFilter" class="w-full border border-slate-200 rounded-xl p-3 text-xs md:text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50 outline-none transition-all cursor-pointer">
                     <option value="all">Semua Jenis</option>
                 </select>
             </div>
 
             <div>
-                <label for="searchInput" class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Pencarian Bebas</label>
-                <input type="text" id="searchInput" placeholder="Cari nama/alamat..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white outline-none transition-shadow">
+                <label for="searchInput" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Pencarian Bebas</label>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Cari nama/alamat..." class="w-full border border-slate-200 rounded-xl p-3 pl-9 text-xs md:text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white outline-none transition-all">
+                    <span class="absolute left-3 top-3.5 text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+                        </svg>
+                    </span>
+                </div>
             </div>
 
         </div>
         <div class="mt-4 flex justify-end">
-            <button id="resetFilterBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors border border-slate-300 cursor-pointer">
+            <button id="resetFilterBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 px-5 rounded-xl text-xs md:text-sm font-bold transition-all border border-slate-200 cursor-pointer active:scale-95 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
                 Reset Semua Filter
             </button>
         </div>
     </section>
 
     <!-- Hero KPI Cards -->
-    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6" id="kpiContainer">
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6" id="kpiContainer">
         
         <!-- Kartu 1: Total -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all duration-300">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Total TPP Terdaftar</h3>
-                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded">Fasilitas</span>
+                <h3 class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Total TPP Terdaftar</h3>
+                <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-blue-100">Fasilitas</span>
             </div>
-            <p class="text-4xl font-black text-slate-800 mt-4" id="kpiTotal">0</p>
+            <div class="mt-4">
+                <p class="text-3xl md:text-4xl font-black text-slate-800 tracking-tight" id="kpiTotal">0</p>
+                <p class="text-xs text-slate-500 mt-1">Tercatat dalam sistem pemantauan</p>
+            </div>
         </div>
 
         <!-- Kartu 2: 2024 -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all duration-300">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Capaian Laik 2024</h3>
-                <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-0.5 rounded">Tahun Lalu</span>
+                <h3 class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Capaian Laik 2024</h3>
+                <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-200">Tahun Lalu</span>
             </div>
-            <div class="flex items-baseline gap-2 mt-4">
-                <p class="text-4xl font-black text-slate-700" id="kpiLaik2024">0</p>
-                <p class="text-sm font-bold text-slate-500" id="kpiPersen2024">(0%)</p>
+            <div class="mt-4">
+                <div class="flex items-baseline gap-2">
+                    <p class="text-3xl md:text-4xl font-black text-slate-700 tracking-tight" id="kpiLaik2024">0</p>
+                    <p class="text-sm md:text-base font-extrabold text-slate-500" id="kpiPersen2024">(0%)</p>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Lulus kualifikasi standar HSP</p>
             </div>
         </div>
 
         <!-- Kartu 3: 2025 -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all duration-300">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Capaian Laik 2025</h3>
-                <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded">Tahun Ini</span>
+                <h3 class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Capaian Laik 2025</h3>
+                <span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100">Tahun Ini</span>
             </div>
-            <div class="flex items-baseline gap-2 mt-4">
-                <p class="text-4xl font-black text-emerald-600" id="kpiLaik2025">0</p>
-                <p class="text-sm font-bold text-emerald-700" id="kpiPersen2025">(0%)</p>
+            <div class="mt-4">
+                <div class="flex items-baseline gap-2">
+                    <p class="text-3xl md:text-4xl font-black text-emerald-600 tracking-tight" id="kpiLaik2025">0</p>
+                    <p class="text-sm md:text-base font-extrabold text-emerald-700" id="kpiPersen2025">(0%)</p>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Sertifikasi HSP yang aktif</p>
             </div>
         </div>
 
         <!-- Kartu 4: Tren -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between hover:shadow-md transition-all duration-300">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wide">Pertumbuhan Kepatuhan</h3>
-                <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded">Tren YoY</span>
+                <h3 class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Pertumbuhan Kepatuhan</h3>
+                <span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-indigo-100">Tren YoY</span>
             </div>
-            <div class="flex items-center gap-2 mt-4">
-                <p class="text-4xl font-black text-indigo-600" id="kpiGrowth">0%</p>
-                <span id="growthIcon" class="text-2xl"></span>
+            <div class="mt-4">
+                <div class="flex items-center gap-2">
+                    <p class="text-3xl md:text-4xl font-black text-indigo-600 tracking-tight" id="kpiGrowth">0%</p>
+                    <span id="growthIcon" class="text-2xl"></span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Perbandingan capaian 2024 vs 2025</p>
             </div>
         </div>
     </section>
@@ -172,16 +214,22 @@
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         
         <!-- Grafik Bar: Komparasi 2024 vs 2025 per Jenis -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">Komparasi Laik HSP Berdasarkan Jenis TPP</h3>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="mb-4">
+                <h3 class="text-md font-bold text-slate-800">Komparasi Laik HSP Berdasarkan Jenis TPP</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Menunjukkan perbandingan jumlah fasilitas yang laik HSP pada tahun 2024 dan 2025</p>
+            </div>
             <div class="relative h-80 w-full">
                 <canvas id="barChart"></canvas>
             </div>
         </div>
 
         <!-- Grafik Doughnut: Proporsi Jenis TPP -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">Distribusi Total TPP Berdasarkan Jenis</h3>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="mb-4">
+                <h3 class="text-md font-bold text-slate-800">Distribusi Total TPP Berdasarkan Jenis</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Proporsi pembagian kategori Tempat Pengolahan Pangan yang terdaftar</p>
+            </div>
             <div class="relative h-80 w-full flex justify-center">
                 <canvas id="doughnutChart"></canvas>
             </div>
@@ -190,22 +238,27 @@
     </section>
 
     <!-- Datagrid / Tabel Interaktif -->
-    <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-12">
-        <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-            <h3 class="text-lg font-bold text-slate-800">Rincian Data TPP</h3>
-            <span class="text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full font-medium border border-slate-200" id="tableRecordCount">Menampilkan 0 data</span>
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden mb-12">
+        <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div>
+                <h3 class="text-md font-bold text-slate-800">Rincian Data TPP</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Daftar tempat pengolahan pangan beserta status kepatuhannya</p>
+            </div>
+            <div>
+                <span class="text-xs text-slate-700 bg-slate-100 px-4 py-2 rounded-full font-bold border border-slate-200" id="tableRecordCount">Menampilkan 0 data</span>
+            </div>
         </div>
         <div class="overflow-x-auto table-container max-h-[600px]">
             <table class="w-full text-left text-sm whitespace-nowrap">
-                <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-black border-b border-slate-200 sticky top-0 z-10">
+                <thead class="bg-slate-50/75 text-slate-500 uppercase text-[10px] font-black border-b border-slate-200 sticky top-0 z-10 backdrop-blur-md">
                     <tr>
-                        <th class="p-4" onclick="handleSort('No')">No <span id="sort-No"></span></th>
-                        <th class="p-4" onclick="handleSort('Nama_TPP')">Nama TPP <span id="sort-Nama_TPP"></span></th>
-                        <th class="p-4" onclick="handleSort('Jenis_TPP')">Jenis TPP <span id="sort-Jenis_TPP"></span></th>
-                        <th class="p-4" onclick="handleSort('Puskesmas')">Puskesmas <span id="sort-Puskesmas"></span></th>
-                        <th class="p-4" onclick="handleSort('Kecamatan')">Kecamatan <span id="sort-Kecamatan"></span></th>
-                        <th class="p-4 text-center" onclick="handleSort('Laik_2024')">Status 2024 <span id="sort-Laik_2024"></span></th>
-                        <th class="p-4 text-center" onclick="handleSort('Laik_2025')">Status 2025 <span id="sort-Laik_2025"></span></th>
+                        <th class="p-4" onclick="handleSort('No')">No <span id="sort-No" class="ml-1"></span></th>
+                        <th class="p-4" onclick="handleSort('Nama_TPP')">Nama TPP <span id="sort-Nama_TPP" class="ml-1"></span></th>
+                        <th class="p-4" onclick="handleSort('Jenis_TPP')">Jenis TPP <span id="sort-Jenis_TPP" class="ml-1"></span></th>
+                        <th class="p-4" onclick="handleSort('Puskesmas')">Puskesmas <span id="sort-Puskesmas" class="ml-1"></span></th>
+                        <th class="p-4" onclick="handleSort('Kecamatan')">Kecamatan <span id="sort-Kecamatan" class="ml-1"></span></th>
+                        <th class="p-4 text-center" onclick="handleSort('Laik_2024')">Status 2024 <span id="sort-Laik_2024" class="ml-1"></span></th>
+                        <th class="p-4 text-center" onclick="handleSort('Laik_2025')">Status 2025 <span id="sort-Laik_2025" class="ml-1"></span></th>
                     </tr>
                 </thead>
                 <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700">
@@ -220,8 +273,6 @@
         // PENGATURAN KONEKSI DATA (MENGGUNAKAN GOOGLE VISUALIZATION API)
         // =========================================================================
         const SHEET_ID = '1r38gsPUYCcJx3be4eLU3rqHkoqKKYDQU-_T9e37RkHk';
-        
-        // Endpoint gviz/tq memastikan CORS tidak diblokir dan menghindari peringatan file besar Google Drive
         const GOOGLE_SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
         
         /**
@@ -243,27 +294,30 @@
                 const statusMessage = document.getElementById('statusMessage');
                 const lastUpdated = document.getElementById('lastUpdated');
                 
-                statusMessage.style.display = 'block';
+                statusMessage.style.display = 'flex';
                 statusMessage.classList.replace('bg-emerald-50', 'bg-blue-50');
                 statusMessage.classList.replace('text-emerald-700', 'text-blue-700');
-                statusMessage.classList.replace('border-emerald-200', 'border-blue-200');
-                statusMessage.innerHTML = `<span class="animate-pulse font-semibold">Mengunduh data secara langsung dari Google Sheets API... Mohon tunggu (memakan waktu untuk memproses ratusan ribu data).</span>`;
+                statusMessage.classList.replace('border-emerald-200', 'border-blue-100');
+                statusMessage.innerHTML = `
+                    <svg class="animate-spin h-5 w-5 text-blue-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="animate-pulse font-semibold">Mengunduh data secara langsung dari Google Sheets API... Mohon tunggu sebentar.</span>
+                `;
                 
-                // Proses parsing CSV menggunakan PapaParse dengan URL gviz/tq
                 Papa.parse(GOOGLE_SHEET_CSV_URL, {
                     download: true,
                     header: true,
                     skipEmptyLines: true,
                     complete: function(results) {
                         try {
-                            // Validasi pencegahan jika Google tetap mengirimkan dokumen HTML 
                             if (results.data.length > 0 && results.data[0] && Object.keys(results.data[0]).some(key => key.toLowerCase().includes('<!doctype html>'))) {
                                 throw new Error("Terdeteksi respon HTML, bukan CSV.");
                             }
 
                             const parsedData = results.data;
                             
-                            // Pemetaan header CSV untuk mengakomodasi penamaan kolom dari Google Sheets
                             const mappedData = parsedData.map(row => {
                                 return {
                                     No: row['No.'] || row['No'] || '-',
@@ -287,7 +341,6 @@
 
                         } catch (mappingError) {
                             console.error("Gagal memetakan data CSV:", mappingError);
-                            // Fallback ke data simulasi
                             state.masterData = getMockDataAsli();
                             state.filteredData = [...state.masterData];
                             finalizeDataLoading(statusMessage, lastUpdated, true, `(Tautan gagal diproses. ${mappingError.message}. Menggunakan data simulasi.)`);
@@ -295,7 +348,6 @@
                     },
                     error: function(err) {
                         console.error("Error mengunduh dari Google Sheets:", err);
-                        // Fallback ke data simulasi jika link rusak atau ditolak karena CORS
                         state.masterData = getMockDataAsli();
                         state.filteredData = [...state.masterData];
                         finalizeDataLoading(statusMessage, lastUpdated, true, `(Gagal mengambil data dari Google Sheets. Error: ${err.message}. Menggunakan data simulasi.)`);
@@ -315,15 +367,23 @@
                 if (isMock) {
                     statusMessage.classList.replace('bg-blue-50', 'bg-amber-50');
                     statusMessage.classList.replace('text-blue-700', 'text-amber-800');
-                    statusMessage.classList.replace('border-blue-200', 'border-amber-200');
+                    statusMessage.classList.replace('border-blue-100', 'border-amber-200');
                 } else {
                     statusMessage.classList.replace('bg-blue-50', 'bg-emerald-50');
                     statusMessage.classList.replace('text-blue-700', 'text-emerald-700');
-                    statusMessage.classList.replace('border-blue-200', 'border-emerald-200');
+                    statusMessage.classList.replace('border-blue-100', 'border-emerald-200');
                 }
                 
                 let modeText = isMock ? "Data Simulasi/Contoh" : "Data dari Google Sheets";
-                statusMessage.innerHTML = `<span class="font-bold">Berhasil!</span> ${modeText} berhasil dimuat. Total data: ${state.masterData.length.toLocaleString('id-ID')} baris. <span class="text-xs ${isMock ? 'text-amber-700 font-semibold' : 'text-rose-600'} block mt-1">${warningText}</span>`;
+                statusMessage.innerHTML = `
+                    <span class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-emerald-600">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <strong class="font-bold">Berhasil!</strong> ${modeText} berhasil dimuat. Total data: ${state.masterData.length.toLocaleString('id-ID')} baris.
+                    </span>
+                    <span class="text-xs ${isMock ? 'text-amber-700 font-semibold' : 'text-rose-600'} block mt-1">${warningText}</span>
+                `;
                 
                 const date = new Date();
                 lastUpdated.innerText = `Sinkronisasi: ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} WIB`;
@@ -345,11 +405,9 @@
             try {
                 const getUnique = (key) => [...new Set(state.masterData.map(item => item[key]))].filter(val => val && val !== '-').sort();
 
-                // Provinsi & Jenis TPP bersifat global
                 populateSelect('provinsiFilter', getUnique('Provinsi'), 'Semua Provinsi');
                 populateSelect('jenisFilter', getUnique('Jenis_TPP'), 'Semua Jenis');
 
-                // Inisialisasi dropdown berjenjang (Kabupaten, Kecamatan, Puskesmas)
                 updateGeographicalDropdowns('init');
 
             } catch (error) {
@@ -359,7 +417,6 @@
 
         /**
          * Logika Filter Berjenjang (Cascading Dropdowns)
-         * Menyesuaikan opsi Kabupaten, Kecamatan, dan Puskesmas berdasarkan pilihan Provinsi.
          */
         function updateGeographicalDropdowns(triggerLevel) {
             try {
@@ -373,7 +430,6 @@
                 let currentKec = kecSelect.value;
                 let currentPusk = puskSelect.value;
 
-                // Jika parent berubah, reset semua children ke 'all'
                 if (triggerLevel === 'provinsi') {
                     currentKab = 'all'; currentKec = 'all'; currentPusk = 'all';
                 } else if (triggerLevel === 'kabupaten') {
@@ -382,25 +438,21 @@
                     currentPusk = 'all';
                 }
 
-                // 1. Filter Data Kabupaten (Tergantung Provinsi)
                 let dataForKab = state.masterData;
                 if (selProv !== 'all') {
                     dataForKab = dataForKab.filter(item => item.Provinsi === selProv);
                 }
                 
-                // 2. Filter Data Kecamatan (Tergantung Provinsi + Kabupaten)
                 let dataForKec = dataForKab;
                 if (currentKab !== 'all') {
                     dataForKec = dataForKec.filter(item => item.Kabupaten_Kota === currentKab);
                 }
 
-                // 3. Filter Data Puskesmas (Tergantung Provinsi + Kabupaten + Kecamatan)
                 let dataForPusk = dataForKec;
                 if (currentKec !== 'all') {
                     dataForPusk = dataForPusk.filter(item => item.Kecamatan === currentKec);
                 }
 
-                // Populate Dropdowns dengan opsi yang tersisa & pertahankan value sebelumnya jika masih ada
                 if (triggerLevel === 'provinsi' || triggerLevel === 'init') {
                     const uniqueKab = [...new Set(dataForKab.map(item => item.Kabupaten_Kota))].filter(val => val && val !== '-').sort();
                     populateSelect('kabupatenFilter', uniqueKab, 'Semua Kab/Kota', currentKab);
@@ -429,7 +481,6 @@
                 const selectEl = document.getElementById(elementId);
                 selectEl.innerHTML = `<option value="all">${defaultText}</option>`;
                 
-                // Cek apakah previous selectedValue masih valid di options terbaru
                 let isSelectedValueValid = false;
 
                 optionsArray.forEach(opt => {
@@ -443,7 +494,6 @@
                     selectEl.appendChild(option);
                 });
 
-                // Jika nilai yang dipilih sebelumnya sudah tidak relevan dengan filter baru, paksa ke 'all'
                 if (!isSelectedValueValid && selectedValue !== 'all') {
                     selectEl.value = 'all';
                 }
@@ -458,7 +508,6 @@
          */
         function setupEventListeners() {
             try {
-                // Event Listener khusus untuk Filter Berjenjang (Geographical)
                 document.getElementById('provinsiFilter').addEventListener('change', () => {
                     updateGeographicalDropdowns('provinsi');
                     applyFilters();
@@ -475,17 +524,14 @@
                     applyFilters();
                 });
 
-                // Filter Independen
                 document.getElementById('jenisFilter').addEventListener('change', applyFilters);
                 document.getElementById('searchInput').addEventListener('input', applyFilters);
 
-                // Reset Button
                 document.getElementById('resetFilterBtn').addEventListener('click', () => {
                     document.getElementById('provinsiFilter').value = 'all';
                     document.getElementById('jenisFilter').value = 'all';
                     document.getElementById('searchInput').value = '';
                     
-                    // Reset cascading filter dari akar (Provinsi)
                     updateGeographicalDropdowns('provinsi');
                     applyFilters();
                 });
@@ -577,15 +623,15 @@
                 
                 if (growth > 0) {
                     kpiGrowthEl.innerText = `+${growth}%`;
-                    kpiGrowthEl.className = "text-4xl font-black text-emerald-600";
+                    kpiGrowthEl.className = "text-3xl md:text-4xl font-black text-emerald-600";
                     growthIconEl.innerText = "📈";
                 } else if (growth < 0) {
                     kpiGrowthEl.innerText = `${growth}%`;
-                    kpiGrowthEl.className = "text-4xl font-black text-rose-600";
+                    kpiGrowthEl.className = "text-3xl md:text-4xl font-black text-rose-600";
                     growthIconEl.innerText = "📉";
                 } else {
                     kpiGrowthEl.innerText = `${growth}%`;
-                    kpiGrowthEl.className = "text-4xl font-black text-slate-400";
+                    kpiGrowthEl.className = "text-3xl md:text-4xl font-black text-slate-400";
                     growthIconEl.innerText = "➖";
                 }
 
@@ -610,7 +656,6 @@
                     if (Number(item.Laik_2025) === 1) aggData[jenis].laik25++;
                 });
 
-                // Mengurutkan dan mengambil top 15 agar grafik tetap rapi
                 let sortedKeys = Object.keys(aggData).sort((a,b) => aggData[b].total - aggData[a].total).slice(0, 15);
                 
                 const labels = sortedKeys;
@@ -629,13 +674,14 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: 'Laik HSP 2024', data: dataLaik24, backgroundColor: color24, borderRadius: 4 },
-                            { label: 'Laik HSP 2025', data: dataLaik25, backgroundColor: color25, borderRadius: 4 }
+                            { label: 'Laik HSP 2024', data: dataLaik24, backgroundColor: color24, borderRadius: 6 },
+                            { label: 'Laik HSP 2025', data: dataLaik25, backgroundColor: color25, borderRadius: 6 }
                         ]
                     },
                     options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } },
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
                         scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
                     }
                 });
@@ -649,9 +695,10 @@
                         datasets: [{ data: dataTotal, backgroundColor: colorDonut, borderWidth: 0, hoverOffset: 4 }]
                     },
                     options: {
-                        responsive: true, maintainAspectRatio: false,
+                        responsive: true, 
+                        maintainAspectRatio: false,
                         plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } },
-                        cutout: '65%'
+                        cutout: '70%'
                     }
                 });
 
@@ -668,44 +715,43 @@
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = '';
 
-                // Membatasi render tabel agar DOM tidak macet saat data ratusan ribu
                 const MAX_RENDER = 500; 
                 const renderData = state.filteredData.slice(0, MAX_RENDER);
                 
                 let countText = `Menampilkan ${state.filteredData.length.toLocaleString('id-ID')} data`;
                 if(state.filteredData.length > MAX_RENDER) {
-                    countText = `Menampilkan ${MAX_RENDER} dari ${state.filteredData.length.toLocaleString('id-ID')} data (dibatasi agar browser tidak lambat)`;
+                    countText = `Menampilkan ${MAX_RENDER} dari ${state.filteredData.length.toLocaleString('id-ID')} data (dibatasi agar browser tetap cepat)`;
                 }
                 document.getElementById('tableRecordCount').innerText = countText;
 
                 if (renderData.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500 italic">Tidak ada data yang sesuai dengan filter pencarian.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 italic">Tidak ada data yang sesuai dengan filter pencarian.</td></tr>`;
                     return;
                 }
 
                 const fragment = document.createDocumentFragment();
 
-                renderData.forEach((item, index) => {
+                renderData.forEach((item) => {
                     const row = document.createElement('tr');
-                    row.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0';
+                    row.className = 'hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-0';
 
                     const badge24 = Number(item.Laik_2024) === 1 
-                        ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wide border border-emerald-200">Laik</span>` 
-                        : `<span class="px-2 py-1 rounded bg-slate-100 text-slate-500 font-bold text-[10px] uppercase tracking-wide border border-slate-200">Tidak</span>`;
+                        ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase tracking-wide border border-emerald-100"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Laik</span>` 
+                        : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-50 text-slate-500 font-bold text-[10px] uppercase tracking-wide border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Tidak</span>`;
                     
                     const badge25 = Number(item.Laik_2025) === 1 
-                        ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wide border border-emerald-200">Laik</span>` 
-                        : `<span class="px-2 py-1 rounded bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide border border-rose-200">Tidak</span>`;
+                        ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase tracking-wide border border-emerald-100"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Laik</span>` 
+                        : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 font-bold text-[10px] uppercase tracking-wide border border-rose-100"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Tidak</span>`;
 
                     row.innerHTML = `
-                        <td class="p-4 text-slate-600 font-medium">${item.No}</td>
+                        <td class="p-4 text-slate-500 font-bold text-xs">${item.No}</td>
                         <td class="p-4">
-                            <div class="font-bold text-slate-800">${item.Nama_TPP}</div>
-                            <div class="text-xs text-slate-500 max-w-xs truncate mt-0.5" title="${item.Alamat}">${item.Alamat || '-'}</div>
+                            <div class="font-bold text-slate-800 text-sm">${item.Nama_TPP}</div>
+                            <div class="text-[11px] text-slate-400 max-w-xs truncate mt-0.5" title="${item.Alamat}">${item.Alamat || '-'}</div>
                         </td>
-                        <td class="p-4"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[11px] font-semibold border border-blue-100 whitespace-nowrap">${item.Jenis_TPP}</span></td>
-                        <td class="p-4 text-slate-600 font-medium">${item.Puskesmas}</td>
-                        <td class="p-4 text-slate-600 font-medium">${item.Kecamatan}</td>
+                        <td class="p-4"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-blue-100 whitespace-nowrap uppercase tracking-wider">${item.Jenis_TPP}</span></td>
+                        <td class="p-4 text-slate-600 font-semibold text-xs">${item.Puskesmas}</td>
+                        <td class="p-4 text-slate-600 font-semibold text-xs">${item.Kecamatan}</td>
                         <td class="p-4 text-center">${badge24}</td>
                         <td class="p-4 text-center">${badge25}</td>
                     `;
@@ -739,7 +785,7 @@
                 const activeIconEl = document.getElementById(`sort-${columnName}`);
                 if (activeIconEl) {
                     activeIconEl.innerText = state.sortAsc ? '▲' : '▼';
-                    activeIconEl.className = 'text-blue-600 ml-1 text-[10px]';
+                    activeIconEl.className = 'text-blue-500 ml-1 text-[10px]';
                 }
 
                 executeSort();
@@ -780,7 +826,7 @@
         }
 
         /**
-         * Data Asli Bawaan (Hanya digunakan jika koneksi ke Google Sheets gagal)
+         * Data Asli Bawaan (Digunakan jika koneksi ke Google Sheets gagal/diblokir CORS)
          */
         function getMockDataAsli() {
             try {
